@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Short Link Nextup</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
@@ -61,25 +62,37 @@
             </div>
             <div class="card-body">
                 <div class="row">
+                    @if ($errors->any())
+    <div class="alert alert-danger">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
                     <div class="col-lg-12 col-12 table-responsive-sm table-responsive-md">
                         <table class="table table-bordered table-responsive-sm">
                             <thead>
-                                <tr>
+                                <tr class="text-center">
                                     <th>NO</th>
-                                    <th>QR</th>
+                                    <th>QR Code</th>
                                     <th>Title</th>
                                     <th>Short Link</th>
                                     <th>Link</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($shortLinks as $item)
-                                <tr>
+                                <tr id="row-{{ $item->id }}" class="text-center">
                                     <td>{{ $loop->iteration }}</td>
                                     <td class="text-center">
-                                        <img src="{{ asset('storage/qrcodes/' . $item->qrcode) }}" alt="QR Code" width="100" height="100">
+                                        <img src="{{ asset('storage/qrcodes/' . $item->qrcode) }}" alt="QR Code"
+                                            width="100" height="100">
                                         <br>
-                                        <a href="{{ route('qr.download', ['filename' => $item->qrcode]) }}">Download QR</a>
+                                        <a class="mt-2 btn btn-sm btn-primary" href="{{ route('qr.download', ['filename' => $item->qrcode]) }}">Download
+                                            QR</a>
                                     </td>
                                     <td>{{ $item->title }}</td>
                                     <td>
@@ -90,17 +103,54 @@
                                     <td>
                                         {{ $item->link }}
                                     </td>
-                                </tr>
+                                    <td>
+                                        <form action="{{ route('shorten.link.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus link pendek ini?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                        </form>
+                                    </td>
+                                </tr>                                                        
                                 @endforeach
                             </tbody>
                         </table>
+                        <div class="float-end">
+                            {!! $shortLinks->onEachSide(1)->links('custom_pagination') !!}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
-
     </div>
+    <script>
+        function confirmDelete(itemId) {
+            if (confirm("Apakah Anda yakin ingin menghapus item ini?")) {
+                // Lakukan permintaan penghapusan dengan menggunakan route yang telah Anda tentukan.
+                // Di sini, kita akan menggunakan fetch untuk melakukan permintaan DELETE.
+                fetch(`short-links/destroy/${itemId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Hapus baris tabel setelah penghapusan berhasil.
+                        document.getElementById(`row-${itemId}`).remove();
+                    } else {
+                        alert('Terjadi kesalahan saat menghapus item.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Terjadi kesalahan:', error);
+                });
+            } else {
+                // Pengguna membatalkan penghapusan
+            }
+        }
+    </script>
+        
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous">
     </script>

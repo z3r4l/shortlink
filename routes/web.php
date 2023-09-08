@@ -28,8 +28,9 @@ Route::get('/generate-qr-code-with-logo', [QRCodeController::class, 'generateQRC
 
 
 // Route Shortlink
-Route::get('/', [ShortLinkController::class, 'index']);
-Route::post('generate-short-link', [ShortLinkController::class, 'store'])->name('generate.shorten.link.post');
+Route::get('short-link', [ShortLinkController::class, 'index']);
+Route::post('short-link', [ShortLinkController::class, 'store'])->name('generate.shorten.link.post');
+Route::delete('short-links/destroy/{id}', [ShortLinkController::class, 'destroy'])->name('shorten.link.destroy');
 Route::get('{code}', [ShortLinkController::class, 'shortenLink'])->name('shorten.link');
 Route::get('download/{filename}', [ShortLinkController::class, 'download'])->name('qr.download');
 
